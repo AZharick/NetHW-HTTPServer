@@ -18,6 +18,7 @@ public class Server {
    private static final List<String> validPaths = List.of("/index.html", "/spring.svg", "/spring.png", "/resources.html",
            "/styles.css", "/app.js", "/links.html", "/forms.html", "/classic.html", "/events.html", "/events.js");
    ServerSocket serverSocket;
+   Socket clientSocket;
 
    public void start() throws IOException {
       serverSocket = new ServerSocket(PORT);
@@ -25,21 +26,20 @@ public class Server {
       ExecutorService threadPool = Executors.newFixedThreadPool(64);
 
       while (true) {
-         Socket clientSocket = serverSocket.accept();
-         threadPool.execute(() -> {
+         clientSocket = serverSocket.accept();
+         threadPool.submit(() -> {
             try {
                handleRequest(clientSocket);
             } catch (IOException e) {
-               e.printStackTrace();
+               throw new RuntimeException(e);
             }
          });
       }
-   }
+   }//start
 
-   private void handleRequest(Socket clientSocket) throws IOException {
+   private void handleRequest(Socket socket) throws IOException {
       while (true) {
          try (
-                 final var socket = serverSocket.accept();
                  final var in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                  final var out = new BufferedOutputStream(socket.getOutputStream());
          ) {
@@ -94,8 +94,8 @@ public class Server {
             ).getBytes());
             Files.copy(filePath, out);
             out.flush();
-         }
-      }
+         }//try-with-res
+      }//while
    }//handleRequest
 
-}
+}//Server
